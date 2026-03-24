@@ -5,6 +5,8 @@ from clawallex import (
     ClawallexClient,
     ClawallexApiError,
     ClawallexPaymentRequiredError,
+    ModeCode,
+    CardType,
     NewCardParams,
     TransactionListParams,
 )
@@ -217,8 +219,8 @@ class TestModeALifecycle(unittest.TestCase):
 
         # 1. create card
         params = NewCardParams(
-            mode_code=100,
-            card_type=100,
+            mode_code=ModeCode.WALLET,
+            card_type=CardType.FLASH,
             amount="5.0000",
             client_request_id=req_id,
         )
@@ -235,7 +237,7 @@ class TestModeALifecycle(unittest.TestCase):
             for _ in range(30):
                 _time.sleep(2)
                 cl = self.client.card_list(page=1, page_size=100)
-                new_cards = [c for c in cl.data if c.card_id not in existing_ids and c.mode_code == 100]
+                new_cards = [c for c in cl.data if c.card_id not in existing_ids and c.mode_code == ModeCode.WALLET]
                 if new_cards:
                     card_id = new_cards[0].card_id
                     break
@@ -262,13 +264,37 @@ class TestModeB402(unittest.TestCase):
 
     def test_mode_b_returns_402(self):
         import uuid
+        payer_addr = "0x850E5F8D352CC8f501754f8835eE28e4ea4Ba68C"
+        dummy_addr = "0x0000000000000000000000000000000000000000"
+        dummy_nonce = "0x" + "00" * 32
+        dummy_sig = "0x" + "00" * 65
         params = NewCardParams(
-            mode_code=200,
-            card_type=200,
-            amount="100.0000",
+            mode_code=ModeCode.X402,
+            card_type=CardType.STREAM,
+            amount="1.0000",
             client_request_id=str(uuid.uuid4()),
             chain_code="ETH",
             token_code="USDC",
+            payer_address=payer_addr,
+            x402_version=1,
+            payment_payload={
+                "scheme": "exact", "network": "ETH",
+                "payload": {
+                    "signature": dummy_sig,
+                    "authorization": {
+                        "from": payer_addr, "to": dummy_addr,
+                        "value": "1050000", "validAfter": "0", "validBefore": "9999999999",
+                        "nonce": dummy_nonce,
+                    },
+                },
+            },
+            payment_requirements={
+                "scheme": "exact", "network": "ETH",
+                "asset": dummy_addr, "payTo": dummy_addr,
+                "maxAmountRequired": "1050000",
+                "extra": {"referenceId": "dummy"},
+            },
+            extra={"card_amount": "1.0000", "paid_amount": "1.0500"},
         )
         with self.assertRaises(ClawallexPaymentRequiredError) as ctx:
             self.client.new_card(params)
