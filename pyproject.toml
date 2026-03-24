@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "clawallex-sdk"
+name = "clawallex"
 version = "1.0.0"
 description = "Clawallex Payment API Python SDK"
 readme = "README.md"
