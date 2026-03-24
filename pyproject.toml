@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clawallex-sdk"
+version = "1.0.0"
+description = "Clawallex Payment API Python SDK"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["requests>=2.28"]
+
+[project.urls]
+Repository = "https://github.com/clawallex/python-sdk"
