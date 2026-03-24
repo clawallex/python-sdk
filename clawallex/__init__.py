@@ -44,6 +44,21 @@ class ClawallexPaymentRequiredError(Exception):
         return f"ClawallexPaymentRequiredError(code={self.code!r}, details={self.details})"
 
 
+# ─── Constants ────────────────────────────────────────────────────────────────
+
+
+class ModeCode:
+    """Funding source for card creation."""
+    WALLET = 100  # Mode A: deduct from wallet balance
+    X402   = 200  # Mode B: on-chain x402 USDC payment
+
+
+class CardType:
+    """Card lifecycle."""
+    FLASH  = 100  # One-time use, auto-destroyed after a single transaction
+    STREAM = 200  # Reloadable, suitable for recurring payments
+
+
 # ─── Request / Response Types ─────────────────────────────────────────────────
 
 
