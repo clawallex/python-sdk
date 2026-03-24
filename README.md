@@ -5,7 +5,7 @@ Python SDK for the Clawallex Payment API. Requires Python 3.10+.
 ## Installation
 
 ```bash
-pip install clawallex-sdk
+pip install clawallex
 ```
 
 ## Quick Start
@@ -92,12 +92,12 @@ Mode A is the simplest path: cards are paid from your Clawallex wallet balance. 
 
 ```python
 import uuid
-from clawallex import NewCardParams
+from clawallex import NewCardParams, ModeCode, CardType
 
 order = client.new_card(NewCardParams(
-    mode_code=100,          # Mode A
-    card_type=100,          # 100=flash (single-use), 200=stream (rechargeable)
-    amount="50.0000",       # card face value in USD
+    mode_code=ModeCode.WALLET,  # Mode A
+    card_type=CardType.FLASH,   # FLASH (single-use) or STREAM (rechargeable)
+    amount="50.0000",           # card face value in USD
     client_request_id=str(uuid.uuid4()),  # idempotency key
 ))
 
@@ -176,7 +176,7 @@ Agent → POST /card-orders (same client_request_id) → 200 + card created
 
 ```python
 import uuid
-from clawallex import ClawallexClient, ClawallexPaymentRequiredError, NewCardParams
+from clawallex import ClawallexClient, ClawallexPaymentRequiredError, NewCardParams, ModeCode, CardType
 
 client = ClawallexClient.create(...)
 
@@ -185,11 +185,11 @@ details = None
 
 try:
     client.new_card(NewCardParams(
-        mode_code=200,
-        card_type=200,           # 100=flash, 200=stream
+        mode_code=ModeCode.X402,
+        card_type=CardType.STREAM,  # FLASH or STREAM
         amount="200.0000",
         client_request_id=client_request_id,
-        chain_code="ETH",       # or "BASE"
+        chain_code="ETH",           # or "BASE"
         token_code="USDC",
     ))
 except ClawallexPaymentRequiredError as e:
@@ -294,8 +294,8 @@ requirements = X402PaymentRequirements(
 )
 
 order = client.new_card(NewCardParams(
-    mode_code=200,
-    card_type=200,
+    mode_code=ModeCode.X402,
+    card_type=CardType.STREAM,
     amount="200.0000",
     client_request_id=client_request_id,          # MUST reuse from Stage 1
     x402_version=1,
@@ -397,12 +397,12 @@ except ClawallexApiError as e:
 
 ## Enums Reference
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `mode_code` | `100` | Mode A — wallet funded |
-| `mode_code` | `200` | Mode B — x402 on-chain |
-| `card_type` | `100` | Flash card |
-| `card_type` | `200` | Stream card (subscription) |
+| Constant | Named Constant | Value | Description |
+|----------|---------------|-------|-------------|
+| `mode_code` | `ModeCode.WALLET` | `100` | Mode A — wallet funded |
+| `mode_code` | `ModeCode.X402` | `200` | Mode B — x402 on-chain |
+| `card_type` | `CardType.FLASH` | `100` | Flash card |
+| `card_type` | `CardType.STREAM` | `200` | Stream card (subscription) |
 | `card.status` | `200` | Active |
 | `card.status` | `220` | Closing |
 | `card.status` | `230` | Expired |
