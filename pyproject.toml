@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clawallex"
-version = "1.0.0"
+version = "1.0.1"
 description = "Clawallex Payment API Python SDK"
 readme = "README.md"
 license = "MIT"
