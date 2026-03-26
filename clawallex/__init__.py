@@ -173,8 +173,9 @@ class NewCardParams:
     client_request_id: str
     fee_amount: Optional[str] = None
     issuer_card_currency: Optional[str] = None
-    issuer_spending_controls: Optional[str] = None
-    allow_3ds_transactions: Optional[str] = None
+    tx_limit: Optional[str] = None
+    allowed_mcc: Optional[str] = None
+    blocked_mcc: Optional[str] = None
     chain_code: Optional[str] = None          # Mode B Stage 1
     token_code: Optional[str] = None          # Mode B Stage 1
     x402_reference_id: Optional[str] = None
@@ -242,6 +243,9 @@ class CardDetailsResponse:
     encrypted_sensitive_data: EncryptedSensitiveData
     expiry_month: int
     expiry_year: int
+    tx_limit: str
+    allowed_mcc: str
+    blocked_mcc: str
     card_currency: str
     available_balance: str
     first_name: str
@@ -266,15 +270,25 @@ class Transaction:
     card_id: str
     card_tx_id: str
     issuer_tx_id: str
+    issuer_ori_tx_id: str
     action_type: int
     tx_type: int
+    process_status: str
     amount: str
     fee_amount: str
+    fee_currency: str
+    billing_amount: str
+    billing_currency: str
+    transaction_amount: str
+    transaction_currency: str
     status: int
+    card_fund_applied: int
     is_in_progress: int
     merchant_name: str
     mcc: str
     decline_reason: str
+    description: str
+    issuer_card_available_balance: str
     occurred_at: str
     settled_at: Optional[str]
     webhook_event_id: str
@@ -289,6 +303,26 @@ class TransactionListResponse:
     page_size: int
     total: int
     data: list[Transaction]
+
+
+@dataclass
+class UpdateCardParams:
+    client_request_id: str
+    tx_limit: Optional[str] = None
+    allowed_mcc: Optional[str] = None
+    blocked_mcc: Optional[str] = None
+
+
+@dataclass
+class UpdateCardResponse:
+    card_id: str
+    card_order_id: str
+    status: str
+
+
+@dataclass
+class BatchCardBalanceResponse:
+    data: list[CardBalanceResponse]
 
 
 @dataclass
@@ -489,6 +523,9 @@ class ClawallexClient:
             encrypted_sensitive_data=enc,
             expiry_month=d["expiry_month"],
             expiry_year=d["expiry_year"],
+            tx_limit=d.get("tx_limit", ""),
+            allowed_mcc=d.get("allowed_mcc", ""),
+            blocked_mcc=d.get("blocked_mcc", ""),
             card_currency=d["card_currency"],
             available_balance=d["available_balance"],
             first_name=d.get("first_name", ""),
@@ -498,6 +535,17 @@ class ClawallexClient:
             issuer_card_status=d["issuer_card_status"],
             updated_at=d["updated_at"],
         )
+
+    def batch_card_balances(self, card_ids: list[str]) -> BatchCardBalanceResponse:
+        d = self._http.post("/payment/cards/balances", {"card_ids": card_ids})
+        return BatchCardBalanceResponse(
+            data=[CardBalanceResponse(**item) for item in d["data"]],
+        )
+
+    def update_card(self, card_id: str, params: UpdateCardParams) -> UpdateCardResponse:
+        body = {k: v for k, v in vars(params).items() if v is not None}
+        d = self._http.post(f"/payment/cards/{card_id}/update", body)
+        return UpdateCardResponse(**{k: v for k, v in d.items() if k in UpdateCardResponse.__dataclass_fields__})
 
     # ── Transactions ──────────────────────────────────────────────────────────
 
@@ -517,7 +565,7 @@ class ClawallexClient:
             page=d["page"],
             page_size=d["page_size"],
             total=d["total"],
-            data=[Transaction(**t) for t in d["data"]],
+            data=[Transaction(**{k: v for k, v in t.items() if k in Transaction.__dataclass_fields__}) for t in d["data"]],
         )
 
     # ── Refill ────────────────────────────────────────────────────────────────
@@ -550,6 +598,9 @@ __all__ = [
     "TransactionListParams",
     "Transaction",
     "TransactionListResponse",
+    "UpdateCardParams",
+    "UpdateCardResponse",
+    "BatchCardBalanceResponse",
     "RefillCardParams",
     "RefillResponse",
 ]
