@@ -183,6 +183,7 @@ class NewCardParams:
     payment_payload: Optional[dict[str, Any]] = None       # Mode B Stage 2: use ``X402PaymentPayload.to_dict()``
     payment_requirements: Optional[dict[str, Any]] = None  # Mode B Stage 2: use ``X402PaymentRequirements.to_dict()``
     extra: Optional[dict[str, str]] = None    # Mode B Stage 2: ``{"card_amount": ..., "paid_amount": ...}``
+    ttl: Optional[int] = None               # Flash cards only; seconds; default 24 h
     payer_address: Optional[str] = None
 
 
